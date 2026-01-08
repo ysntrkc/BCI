@@ -1,3 +1,9 @@
+# BCI - Baseline vs DWT Comparison
+
+## Experiment 1 - Baseline Model
+
+### Train
+```bash
 nohup python train.py \
   --dataroot /mnt/c/users/gaming/datasets/BCI/combined \
   --name comparison_baseline \
@@ -16,9 +22,10 @@ nohup python train.py \
   --save_epoch_freq 10 \
   --print_freq 50 \
   > 'checkpoints/comparison_baseline/training_output_baseline_bci_20260107_001.txt' 2>&1 &
+```
 
-
-# Test baseline
+### Test
+```bash
 python test.py \
   --dataroot /mnt/c/users/gaming/datasets/BCI/combined \
   --name comparison_baseline \
@@ -27,21 +34,26 @@ python test.py \
   --load_size 320 \
   --crop_size 256 \
   --eval
+```
 
-
-# Evaluate baseline results
+### Evaluate
+```bash
 python evaluate.py \
   --result_path ./results/comparison_baseline/run_20260107_040153_BCI
+```
+
+### Results
+| Metric | Value |
+|--------|-------|
+| Average PSNR | 21.885746928999986 |
+| Average SSIM | 0.5349153675040248 |
 
 
-# Results
-The average psnr is 21.885746928999986
-The average ssim is 0.5349153675040248
 
+## Experiment 2 - DWT Model
 
-
-
-# Train with DWT
+### Train
+```bash
 nohup python train.py \
   --dataroot /mnt/c/users/gaming/datasets/BCI/combined \
   --name comparison_dwt \
@@ -60,9 +72,10 @@ nohup python train.py \
   --save_epoch_freq 10 \
   --print_freq 50 \
   > 'checkpoints/comparison_dwt/training_output_dwt_bci_20260107_001.txt' 2>&1 &
+```
 
-
-# Test DWT
+### Test
+```bash
 python test.py \
   --dataroot /mnt/c/users/gaming/datasets/BCI/combined \
   --name comparison_dwt \
@@ -71,12 +84,16 @@ python test.py \
   --load_size 320 \
   --crop_size 256 \
   --eval
+```
 
-
-# Evaluate DWT results
+### Evaluate
+```bash
 python evaluate.py \
   --result_path ./results/comparison_dwt/run_20260107_095053_BCI
+```
 
-
-The average psnr is 22.549359913171948
-The average ssim is 0.5763130591454685
+### Results
+| Metric | Value |
+|--------|-------|
+| Average PSNR | 22.549359913171948 |
+| Average SSIM | 0.5763130591454685 |
