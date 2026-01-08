@@ -129,7 +129,7 @@ nohup python train.py \
 python test.py \
   --dataroot /mnt/c/users/gaming/datasets/MIST/HER2/combined \
   --name comparison_dwt \
-  --run_name run_20260107_095053_BCI \
+  --run_name run_20260108_075951_MIST_HER2 \
   --preprocess crop \
   --load_size 320 \
   --crop_size 256 \
@@ -139,11 +139,11 @@ python test.py \
 ### Evaluate
 ```bash
 python evaluate.py \
-  --result_path ./results/comparison_dwt/run_20260107_095053_BCI
+  --result_path ./results/comparison_dwt/run_20260108_075951_MIST_HER2
 ```
 
 ### Results
 | Metric | Value |
 |--------|-------|
-| Average PSNR | X |
-| Average SSIM | X |
+| Average PSNR | 15.29767339452869 |
+| Average SSIM | 0.2591457618716408 |
