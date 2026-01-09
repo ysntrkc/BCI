@@ -1,8 +1,10 @@
 import torch
 import itertools
 from util.image_pool import ImagePool
+import torch.nn.functional as F
 from .base_model import BaseModel
 from . import networks
+import numpy as np
 
 
 class CycleGANModel(BaseModel):
@@ -57,6 +59,12 @@ class CycleGANModel(BaseModel):
                 default=0.5,
                 help="use identity mapping. Setting lambda_identity other than 0 has an effect of scaling the weight of the identity mapping loss. For example, if the weight of the identity loss should be 10 times smaller than the weight of the reconstruction loss, please set lambda_identity = 0.1",
             )
+            parser.add_argument(
+                "--use_dwt",
+                action="store_true",
+                help="use DWT (Discrete Wavelet Transform) loss for CycleGAN",
+            )
+            # Note: weight_dwt_ll and weight_dwt_detail are already defined in train_options.py
 
         return parser
 
@@ -78,6 +86,9 @@ class CycleGANModel(BaseModel):
             "cycle_B",
             "idt_B",
         ]
+        # Add DWT loss names if enabled
+        if self.isTrain and hasattr(opt, "use_dwt") and opt.use_dwt:
+            self.loss_names.extend(["dwt_A", "dwt_B"])
         # specify the images you want to save/display. The training/test scripts will call <BaseModel.get_current_visuals>
         visual_names_A = ["real_A", "fake_B", "rec_A"]
         visual_names_B = ["real_B", "fake_A", "rec_B"]
@@ -195,6 +206,59 @@ class CycleGANModel(BaseModel):
         self.fake_A = self.netG_B(self.real_B)  # G_B(B)
         self.rec_B = self.netG_A(self.fake_A)  # G_A(G_B(B))
 
+    def haar_wavelet_decomposition(self, x):
+        """
+        Apply 2D Haar Wavelet Transform using manual convolution filters.
+
+        Input: x - tensor of shape (B, C, H, W)
+        Output: LL, LH, HL, HH - each of shape (B, C, H/2, W/2)
+
+        LL: Approximation (low-low) - smooth/coarse information
+        LH: Horizontal details (low-high) - horizontal edges
+        HL: Vertical details (high-low) - vertical edges
+        HH: Diagonal details (high-high) - diagonal edges/textures
+        """
+        device = x.device
+        B, C, H, W = x.shape
+
+        # Haar filter coefficients (normalized)
+        # Low-pass filter: [1/sqrt(2), 1/sqrt(2)]
+        # High-pass filter: [1/sqrt(2), -1/sqrt(2)]
+        sqrt2 = np.sqrt(2)
+
+        # Create 2D Haar filters for each sub-band
+        # LL filter: low-pass in both directions
+        ll_filter = (
+            torch.tensor([[1, 1], [1, 1]], dtype=torch.float32, device=device) / 2.0
+        )
+        # LH filter: low-pass horizontal, high-pass vertical
+        lh_filter = (
+            torch.tensor([[-1, -1], [1, 1]], dtype=torch.float32, device=device) / 2.0
+        )
+        # HL filter: high-pass horizontal, low-pass vertical
+        hl_filter = (
+            torch.tensor([[-1, 1], [-1, 1]], dtype=torch.float32, device=device) / 2.0
+        )
+        # HH filter: high-pass in both directions
+        hh_filter = (
+            torch.tensor([[1, -1], [-1, 1]], dtype=torch.float32, device=device) / 2.0
+        )
+
+        # Reshape filters for grouped convolution: (out_channels, in_channels/groups, kH, kW)
+        # For depthwise conv with groups=C, we need shape (C, 1, 2, 2)
+        ll_filter = ll_filter.unsqueeze(0).unsqueeze(0).repeat(C, 1, 1, 1)
+        lh_filter = lh_filter.unsqueeze(0).unsqueeze(0).repeat(C, 1, 1, 1)
+        hl_filter = hl_filter.unsqueeze(0).unsqueeze(0).repeat(C, 1, 1, 1)
+        hh_filter = hh_filter.unsqueeze(0).unsqueeze(0).repeat(C, 1, 1, 1)
+
+        # Apply convolution with stride=2 for downsampling (groups=C for channel-wise)
+        LL = F.conv2d(x, ll_filter, stride=2, groups=C)
+        LH = F.conv2d(x, lh_filter, stride=2, groups=C)
+        HL = F.conv2d(x, hl_filter, stride=2, groups=C)
+        HH = F.conv2d(x, hh_filter, stride=2, groups=C)
+
+        return LL, LH, HL, HH
+
     def backward_D_basic(self, netD, real, fake):
         """Calculate GAN loss for the discriminator
 
@@ -256,6 +320,58 @@ class CycleGANModel(BaseModel):
         self.loss_cycle_A = self.criterionCycle(self.rec_A, self.real_A) * lambda_A
         # Backward cycle loss || G_A(G_B(B)) - B||
         self.loss_cycle_B = self.criterionCycle(self.rec_B, self.real_B) * lambda_B
+
+        # DWT loss for fake_B vs real_B (A -> B translation)
+        if hasattr(self.opt, "use_dwt") and self.opt.use_dwt:
+            # DWT loss for fake_B (generated from real_A) vs real_B
+            fake_B_LL, fake_B_LH, fake_B_HL, fake_B_HH = (
+                self.haar_wavelet_decomposition(self.fake_B)
+            )
+            real_B_LL, real_B_LH, real_B_HL, real_B_HH = (
+                self.haar_wavelet_decomposition(self.real_B)
+            )
+
+            # Approximation loss (LL sub-band - coarse structure)
+            loss_B_ll = self.criterionCycle(fake_B_LL, real_B_LL.detach())
+
+            # Detail loss (LH, HL, HH sub-bands - edges and textures)
+            loss_B_detail = (
+                self.criterionCycle(fake_B_LH, real_B_LH.detach())
+                + self.criterionCycle(fake_B_HL, real_B_HL.detach())
+                + self.criterionCycle(fake_B_HH, real_B_HH.detach())
+            ) / 3.0  # Average of three detail sub-bands
+
+            self.loss_dwt_B = (
+                loss_B_ll * self.opt.weight_dwt_ll
+                + loss_B_detail * self.opt.weight_dwt_detail
+            )
+
+            # DWT loss for fake_A (generated from real_B) vs real_A
+            fake_A_LL, fake_A_LH, fake_A_HL, fake_A_HH = (
+                self.haar_wavelet_decomposition(self.fake_A)
+            )
+            real_A_LL, real_A_LH, real_A_HL, real_A_HH = (
+                self.haar_wavelet_decomposition(self.real_A)
+            )
+
+            # Approximation loss (LL sub-band - coarse structure)
+            loss_A_ll = self.criterionCycle(fake_A_LL, real_A_LL.detach())
+
+            # Detail loss (LH, HL, HH sub-bands - edges and textures)
+            loss_A_detail = (
+                self.criterionCycle(fake_A_LH, real_A_LH.detach())
+                + self.criterionCycle(fake_A_HL, real_A_HL.detach())
+                + self.criterionCycle(fake_A_HH, real_A_HH.detach())
+            ) / 3.0  # Average of three detail sub-bands
+
+            self.loss_dwt_A = (
+                loss_A_ll * self.opt.weight_dwt_ll
+                + loss_A_detail * self.opt.weight_dwt_detail
+            )
+        else:
+            self.loss_dwt_A = 0
+            self.loss_dwt_B = 0
+
         # combined loss and calculate gradients
         self.loss_G = (
             self.loss_G_A
@@ -264,6 +380,8 @@ class CycleGANModel(BaseModel):
             + self.loss_cycle_B
             + self.loss_idt_A
             + self.loss_idt_B
+            + self.loss_dwt_A
+            + self.loss_dwt_B
         )
         self.loss_G.backward()
 

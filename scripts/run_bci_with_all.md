@@ -97,3 +97,106 @@ python evaluate.py \
 |--------|-------|
 | Average PSNR | 22.549359913171948 |
 | Average SSIM | 0.5763130591454685 |
+
+
+## Experiment 3 - CycleGAN Baseline Model
+
+### Train
+```bash
+nohup python train.py \
+  --dataroot /mnt/d/thesis/datasets/BCI/combined \
+  --name cyclegan_baseline \
+  --model cycle_gan \
+  --display_id -1 \
+  --batch_size 4 \
+  --num_threads 8 \
+  --load_size 320 \
+  --crop_size 256 \
+  --preprocess crop \
+  --ngf 64 \
+  --ndf 64 \
+  --n_epochs 50 \
+  --n_epochs_decay 50 \
+  --lr 0.0002 \
+  --save_epoch_freq 10 \
+  --print_freq 50 \
+  > '/mnt/d/thesis/checkpoints/cyclegan_baseline/training_output_cyclegan_baseline_bci_20260110_001.txt' 2>&1 &
+```
+
+### Test
+```bash
+python test.py \
+  --dataroot /mnt/c/users/gaming/datasets/BCI/combined \
+  --name cyclegan_baseline \
+  --model cycle_gan \
+  --run_name run_20260110_024846_BCI \
+  --preprocess crop \
+  --load_size 320 \
+  --crop_size 256 \
+  --eval
+```
+
+### Evaluate
+```bash
+python evaluate.py \
+  --result_path /mnt/d/thesis/results/cyclegan_baseline/run_20260110_024846_BCI
+```
+
+### Results
+| Metric | Value |
+|--------|-------|
+| Average PSNR | X |
+| Average SSIM | X |
+
+
+## Experiment 4 - CycleGAN DWT Model
+
+### Train
+```bash
+nohup python train.py \
+  --dataroot /mnt/d/thesis/datasets/BCI/combined \
+  --name cyclegan_dwt \
+  --model cycle_gan \
+  --use_dwt \
+  --weight_dwt_ll 25.0 \
+  --weight_dwt_detail 25.0 \
+  --display_id -1 \
+  --batch_size 4 \
+  --num_threads 8 \
+  --load_size 320 \
+  --crop_size 256 \
+  --preprocess crop \
+  --ngf 64 \
+  --ndf 64 \
+  --n_epochs 50 \
+  --n_epochs_decay 50 \
+  --lr 0.0002 \
+  --save_epoch_freq 10 \
+  --print_freq 50 \
+  > '/mnt/d/thesis/checkpoints/training_output_cyclegan_dwt_bci_20260109_001.txt' 2>&1 &
+```
+
+### Test
+```bash
+python test.py \
+  --dataroot /mnt/d/thesis/datasets/BCI/combined \
+  --name cyclegan_dwt \
+  --model cycle_gan \
+  --run_name run_20260109_124343_BCI \
+  --preprocess crop \
+  --load_size 320 \
+  --crop_size 256 \
+  --eval
+```
+
+### Evaluate
+```bash
+python evaluate.py \
+  --result_path /mnt/d/thesis/results/cyclegan_dwt/run_20260109_124343_BCI
+```
+
+### Results
+| Metric | Value |
+|--------|-------|
+| Average PSNR | 20.219152241068073 |
+| Average SSIM | 0.43168893303754113 |
