@@ -23,7 +23,7 @@ class BaseOptions:
         # basic parameters
         parser.add_argument(
             "--dataroot",
-            default="./datasets/BCI",
+            default="/mnt/d/thesis/datasets/BCI/combined",
             help="path to images (should have subfolders trainA, trainB, valA, valB, etc)",
         )
         parser.add_argument(
@@ -41,7 +41,7 @@ class BaseOptions:
         parser.add_argument(
             "--checkpoints_dir",
             type=str,
-            default="./checkpoints",
+            default="/mnt/d/thesis/checkpoints",
             help="models are saved here",
         )
         # model parameters

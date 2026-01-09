@@ -10,7 +10,10 @@ class TestOptions(BaseOptions):
     def initialize(self, parser):
         parser = BaseOptions.initialize(self, parser)  # define shared options
         parser.add_argument(
-            "--results_dir", type=str, default="./results/", help="saves results here."
+            "--results_dir",
+            type=str,
+            default="/mnt/d/thesis/results/",
+            help="saves results here.",
         )
         parser.add_argument(
             "--aspect_ratio",
@@ -26,7 +29,10 @@ class TestOptions(BaseOptions):
             "--eval", action="store_true", help="use eval mode during test time."
         )
         parser.add_argument(
-            "--num_test", type=int, default=1000, help="how many test images to run"
+            "--num_test",
+            type=int,
+            default=-1,
+            help="how many test images to run (default: -1 = all test images)",
         )
         parser.add_argument(
             "--run_name",
