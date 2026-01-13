@@ -77,29 +77,6 @@ class Pix2PixModel(BaseModel):
             self.loss_names += ["G_sobel"]
         if "conv" in opt.pattern:
             self.loss_names += ["G_conv"]
-        if self.isTrain and ("perc" in opt.pattern or "contextual" in opt.pattern):
-            if "perc" in opt.pattern:
-                self.loss_names += ["G_perc"]
-                if self.opt.which_perceptual == "5_2":
-                    self.perceptual_layer = -1
-                elif self.opt.which_perceptual == "4_2":
-                    self.perceptual_layer = -2
-            if "contextual" in opt.pattern:
-                self.loss_names += ["G_contextual"]
-            self.vggnet_fix = (
-                CoCosNetworks.correspondence.VGG19_feature_color_torchversion(
-                    vgg_normal_correct=self.opt.vgg_normal_correct
-                )
-            )
-            self.vggnet_fix.load_state_dict(torch.load("models/vgg19_conv.pth"))
-            self.vggnet_fix.eval()
-            for param in self.vggnet_fix.parameters():
-                param.requires_grad = False
-
-            self.vggnet_fix.to(self.opt.gpu_ids[0])
-            self.contextual_forward_loss = CoCosNetworks.ContextualLoss_forward(
-                self.opt
-            )
 
         # specify the images you want to save/display. The training/test scripts will call <BaseModel.get_current_visuals>
         self.visual_names = ["real_A", "fake_B", "real_B"]
@@ -322,10 +299,10 @@ class Pix2PixModel(BaseModel):
     def haar_wavelet_decomposition(self, x):
         """
         Apply 2D Haar Wavelet Transform using manual convolution filters.
-        
+
         Input: x - tensor of shape (B, C, H, W)
         Output: LL, LH, HL, HH - each of shape (B, C, H/2, W/2)
-        
+
         LL: Approximation (low-low) - smooth/coarse information
         LH: Horizontal details (low-high) - horizontal edges
         HL: Vertical details (high-low) - vertical edges
@@ -333,35 +310,38 @@ class Pix2PixModel(BaseModel):
         """
         device = x.device
         B, C, H, W = x.shape
-        
-        # Haar filter coefficients (normalized)
-        # Low-pass filter: [1/sqrt(2), 1/sqrt(2)]
-        # High-pass filter: [1/sqrt(2), -1/sqrt(2)]
-        sqrt2 = np.sqrt(2)
-        
+
         # Create 2D Haar filters for each sub-band
         # LL filter: low-pass in both directions
-        ll_filter = torch.tensor([[1, 1], [1, 1]], dtype=torch.float32, device=device) / 2.0
+        ll_filter = (
+            torch.tensor([[1, 1], [1, 1]], dtype=torch.float32, device=device) / 2.0
+        )
         # LH filter: low-pass horizontal, high-pass vertical
-        lh_filter = torch.tensor([[-1, -1], [1, 1]], dtype=torch.float32, device=device) / 2.0
+        lh_filter = (
+            torch.tensor([[-1, -1], [1, 1]], dtype=torch.float32, device=device) / 2.0
+        )
         # HL filter: high-pass horizontal, low-pass vertical
-        hl_filter = torch.tensor([[-1, 1], [-1, 1]], dtype=torch.float32, device=device) / 2.0
+        hl_filter = (
+            torch.tensor([[-1, 1], [-1, 1]], dtype=torch.float32, device=device) / 2.0
+        )
         # HH filter: high-pass in both directions
-        hh_filter = torch.tensor([[1, -1], [-1, 1]], dtype=torch.float32, device=device) / 2.0
-        
+        hh_filter = (
+            torch.tensor([[1, -1], [-1, 1]], dtype=torch.float32, device=device) / 2.0
+        )
+
         # Reshape filters for grouped convolution: (out_channels, in_channels/groups, kH, kW)
         # For depthwise conv with groups=C, we need shape (C, 1, 2, 2)
         ll_filter = ll_filter.unsqueeze(0).unsqueeze(0).repeat(C, 1, 1, 1)
         lh_filter = lh_filter.unsqueeze(0).unsqueeze(0).repeat(C, 1, 1, 1)
         hl_filter = hl_filter.unsqueeze(0).unsqueeze(0).repeat(C, 1, 1, 1)
         hh_filter = hh_filter.unsqueeze(0).unsqueeze(0).repeat(C, 1, 1, 1)
-        
+
         # Apply convolution with stride=2 for downsampling (groups=C for channel-wise)
         LL = F.conv2d(x, ll_filter, stride=2, groups=C)
         LH = F.conv2d(x, lh_filter, stride=2, groups=C)
         HL = F.conv2d(x, hl_filter, stride=2, groups=C)
         HH = F.conv2d(x, hh_filter, stride=2, groups=C)
-        
+
         return LL, LH, HL, HH
 
     def backward_D(self):
@@ -544,22 +524,26 @@ class Pix2PixModel(BaseModel):
 
         if "dwt" in self.opt.pattern:
             # Haar Wavelet Transform loss
-            fake_LL, fake_LH, fake_HL, fake_HH = self.haar_wavelet_decomposition(self.fake_B)
-            real_LL, real_LH, real_HL, real_HH = self.haar_wavelet_decomposition(self.real_B)
-            
+            fake_LL, fake_LH, fake_HL, fake_HH = self.haar_wavelet_decomposition(
+                self.fake_B
+            )
+            real_LL, real_LH, real_HL, real_HH = self.haar_wavelet_decomposition(
+                self.real_B
+            )
+
             # Approximation loss (LL sub-band - coarse structure)
             loss_ll = self.criterionL1(fake_LL, real_LL.detach())
-            
+
             # Detail loss (LH, HL, HH sub-bands - edges and textures)
             loss_detail = (
-                self.criterionL1(fake_LH, real_LH.detach()) +
-                self.criterionL1(fake_HL, real_HL.detach()) +
-                self.criterionL1(fake_HH, real_HH.detach())
+                self.criterionL1(fake_LH, real_LH.detach())
+                + self.criterionL1(fake_HL, real_HL.detach())
+                + self.criterionL1(fake_HH, real_HH.detach())
             ) / 3.0  # Average of three detail sub-bands
-            
+
             self.loss_G_dwt = (
-                loss_ll * self.opt.weight_dwt_ll +
-                loss_detail * self.opt.weight_dwt_detail
+                loss_ll * self.opt.weight_dwt_ll
+                + loss_detail * self.opt.weight_dwt_detail
             )
             self.loss_G += self.loss_G_dwt
 

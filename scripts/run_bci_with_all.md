@@ -126,7 +126,7 @@ nohup python train.py \
 ### Test
 ```bash
 python test.py \
-  --dataroot /mnt/c/users/gaming/datasets/BCI/combined \
+  --dataroot /mnt/d/thesis/datasets/BCI/combined \
   --name cyclegan_baseline \
   --model cycle_gan \
   --run_name run_20260110_024846_BCI \
@@ -145,8 +145,8 @@ python evaluate.py \
 ### Results
 | Metric | Value |
 |--------|-------|
-| Average PSNR | X |
-| Average SSIM | X |
+| Average PSNR | 19.387844116353552 |
+| Average SSIM | 0.4471386262106031 |
 
 
 ## Experiment 4 - CycleGAN DWT Model
