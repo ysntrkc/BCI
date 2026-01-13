@@ -200,3 +200,54 @@ python evaluate.py \
 |--------|-------|
 | Average PSNR | 20.219152241068073 |
 | Average SSIM | 0.43168893303754113 |
+
+
+## Experiment 5 - Pix2Pix Baseline Model
+
+### Train
+```bash
+nohup python train.py \
+  --dataroot /mnt/d/thesis/datasets/BCI/combined \
+  --name pix2pix_baseline \
+  --model pix2pix \
+  --pattern L1 \
+  --display_id -1 \
+  --batch_size 20 \
+  --num_threads 8 \
+  --load_size 320 \
+  --crop_size 256 \
+  --preprocess crop \
+  --ngf 64 \
+  --ndf 64 \
+  --n_epochs 50 \
+  --n_epochs_decay 50 \
+  --lr 0.0002 \
+  --save_epoch_freq 10 \
+  --print_freq 50 \
+  > '/mnt/d/thesis/checkpoints/pix2pix_baseline/training_output_pix2pix_baseline_bci_20260113_001.txt' 2>&1 &
+```
+
+### Test
+```bash
+python test.py \
+  --dataroot /mnt/d/thesis/datasets/BCI/combined \
+  --name pix2pix_baseline \
+  --model pix2pix \
+  --run_name run_20260113_030327_BCI \
+  --preprocess crop \
+  --load_size 320 \
+  --crop_size 256 \
+  --eval
+```
+
+### Evaluate
+```bash
+python evaluate.py \
+  --result_path /mnt/d/thesis/results/pix2pix_baseline/run_20260113_030327_BCI
+```
+
+### Results
+| Metric | Value |
+|--------|-------|
+| Average PSNR | X |
+| Average SSIM | X |
