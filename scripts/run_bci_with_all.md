@@ -443,17 +443,80 @@ python evaluate.py \
   --result_path /mnt/d/thesis/results/comparison_baseline_1024/run_20260118_170529_BCI
 ```
 
+### Results
+| Metric | Value |
+|--------|-------|
+| Average PSNR  ↑    | xxxxxx  |
+| Average SSIM  ↑    | xxxxx  |
+| FID Score     ↓    | xxxxx |
+| KID Score (x1000) ↓ | xxxxx  |
+| JSD Score         ↓ | xxxxx  |
+
+
+## Experiment 8 - Pyramid Pix2Pix (2 layer) DWT Model with original image size 1024x1024 and crop size 512x512
+
+### Train
+```bash
+nohup python train.py \
+  --dataroot /mnt/d/thesis/datasets/BCI/combined \
+  --name comparison_dwt_1024 \
+  --pattern L1_L2_L3_dwt \
+  --display_id -1 \
+  --batch_size 4 \
+  --num_threads 8 \
+  --load_size 1024 \
+  --crop_size 512 \
+  --preprocess crop \
+  --ngf 64 \
+  --ndf 64 \
+  --n_epochs 50 \
+  --n_epochs_decay 50 \
+  --lr 0.0002 \
+  --save_epoch_freq 10 \
+  --print_freq 50 \
+  > '/mnt/d/thesis/checkpoints/comparison_dwt_1024/training_output_dwt_bci_20260118_001.txt' 2>&1 &
+```
+
+### Test
+```bash
+python test.py \
+  --dataroot /mnt/d/thesis/datasets/BCI/combined \
+  --name comparison_dwt_1024 \
+  --run_name {run_name} \
+  --preprocess crop \
+  --load_size 1024 \
+  --crop_size 512 \
+  --eval
+```
+
+### Evaluate
+```bash
+python evaluate.py \
+  --result_path /mnt/d/thesis/results/comparison_dwt_1024/{run_name}
+``` 
+
+### Results
+| Metric | Value |
+|--------|-------|
+| Average PSNR  ↑    | xxxxxx  |
+| Average SSIM  ↑    | xxxxx  |
+| FID Score     ↓    | xxxxx |
+| KID Score (x1000) ↓ | xxxxx  |
+| JSD Score         ↓ | xxxxx  |
+
 
 # Overall Summary of Results
 
 | Experiment | Model Type                         | Average PSNR ↑ | Average SSIM ↑ | FID Score ↓ | KID Score (x1000) ↓ | JSD Score ↓  |
 |------------|------------------------------------|----------------|----------------|-------------|---------------------|--------------|
+| 3          | CycleGAN                           | 19.3878        | 0.4471         | 85.0502     | 42.423              | 0.3309       |
+| 4          | CycleGAN DWT                       | 20.2192        | 0.4317         | 74.2438     | 39.676              | 0.2412       |
+| 5          | Pix2Pix                            | 21.3937        | 0.5282         | 177.3474    | 144.712             | 0.2274       |
+| 6          | Pix2Pix DWT                        | 21.9556        | 0.5698         | 120.6661    | 77.398              | 0.2002       | 
 | 1          | Pyramid Pix2Pix (2 layer)          | 21.8857        | 0.5349         | 149.3463    | 112.267             | 0.1928       |
 | 2          | Pyramid Pix2Pix (2 layer) DWT      | 22.5494        | 0.5763         | 118.8326    | 74.003              | 0.1978       |
-| 3          | CycleGAN Baseline                  | 19.3878        | 0.4471         | 85.0502     | 42.423              | 0.3309       |
-| 4          | CycleGAN DWT                       | 20.2192        | 0.4317         | 74.2438     | 39.676              | 0.2412       |
-| 5          | Pix2Pix Baseline                   | 21.3937        | 0.5282         | 177.3474    | 144.712             | 0.2274       |
-| 6          | Pix2Pix DWT                        | 21.9556        | 0.5698         | 120.6661    | 77.398              | 0.2002       | 
+| 7          | Pyramid Pix2Pix (2 layer) (1024x1024)     | xxxxxx  | xxxxx          | xxxxx       | xxxxx               | xxxxx        |
+| 8          | Pyramid Pix2Pix (2 layer) DWT (1024x1024) | xxxxxx  | xxxxx          | xxxxx       | xxxxx               | xxxxx        |
 
 ## Notes
 
