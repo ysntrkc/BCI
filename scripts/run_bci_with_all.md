@@ -430,7 +430,7 @@ nohup python train.py \
 python test.py \
   --dataroot /mnt/d/thesis/datasets/BCI/combined \
   --name comparison_baseline_1024 \
-  --run_name [run-name] \
+  --run_name run_20260118_170529_BCI \
   --preprocess crop \
   --load_size 1024 \
   --crop_size 512 \
@@ -440,7 +440,7 @@ python test.py \
 ### Evaluate
 ```bash
 python evaluate.py \
-  --result_path /mnt/d/thesis/results/comparison_baseline_1024/[run-name]
+  --result_path /mnt/d/thesis/results/comparison_baseline_1024/run_20260118_170529_BCI
 ```
 
 
