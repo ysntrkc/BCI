@@ -443,14 +443,28 @@ python evaluate.py \
   --result_path /mnt/d/thesis/results/comparison_baseline_1024/run_20260118_170529_BCI
 ```
 
+<!-- 
+============================================================
+                    EVALUATION SUMMARY
+============================================================
+Number of images:  977
+------------------------------------------------------------
+Average PSNR:      20.605509 dB
+Average SSIM:      0.544433
+FID Score:         106.360610
+KID Score:         0.059528
+JSD Score:         0.289643
+============================================================
+ -->
+
 ### Results
 | Metric | Value |
 |--------|-------|
-| Average PSNR  ↑    | xxxxxx  |
-| Average SSIM  ↑    | xxxxx  |
-| FID Score     ↓    | xxxxx |
-| KID Score (x1000) ↓ | xxxxx  |
-| JSD Score         ↓ | xxxxx  |
+| Average PSNR  ↑    | 20.605509  |
+| Average SSIM  ↑    | 0.544433  |
+| FID Score     ↓    | 106.360610 |
+| KID Score (x1000) ↓ | 59.528  |
+| JSD Score         ↓ | 0.289643  |
 
 
 ## Experiment 8 - Pyramid Pix2Pix (2 layer) DWT Model with original image size 1024x1024 and crop size 512x512
@@ -474,7 +488,7 @@ nohup python train.py \
   --lr 0.0002 \
   --save_epoch_freq 10 \
   --print_freq 50 \
-  > '/mnt/d/thesis/checkpoints/comparison_dwt_1024/training_output_dwt_bci_20260118_001.txt' 2>&1 &
+  > '/mnt/d/thesis/checkpoints/comparison_dwt_1024/training_output_dwt_bci_20260119_001.txt' 2>&1 &
 ```
 
 ### Test
@@ -482,7 +496,7 @@ nohup python train.py \
 python test.py \
   --dataroot /mnt/d/thesis/datasets/BCI/combined \
   --name comparison_dwt_1024 \
-  --run_name {run_name} \
+  --run_name run_20260119_024601_BCI \
   --preprocess crop \
   --load_size 1024 \
   --crop_size 512 \
@@ -492,7 +506,7 @@ python test.py \
 ### Evaluate
 ```bash
 python evaluate.py \
-  --result_path /mnt/d/thesis/results/comparison_dwt_1024/{run_name}
+  --result_path /mnt/d/thesis/results/comparison_dwt_1024/run_20260119_024601_BCI
 ``` 
 
 ### Results
@@ -515,7 +529,7 @@ python evaluate.py \
 | 6          | Pix2Pix DWT                        | 21.9556        | 0.5698         | 120.6661    | 77.398              | 0.2002       | 
 | 1          | Pyramid Pix2Pix (2 layer)          | 21.8857        | 0.5349         | 149.3463    | 112.267             | 0.1928       |
 | 2          | Pyramid Pix2Pix (2 layer) DWT      | 22.5494        | 0.5763         | 118.8326    | 74.003              | 0.1978       |
-| 7          | Pyramid Pix2Pix (2 layer) (1024x1024)     | xxxxxx  | xxxxx          | xxxxx       | xxxxx               | xxxxx        |
+| 7          | Pyramid Pix2Pix (2 layer) (1024x1024)     | 20.6055 | 0.5444         | 106.3606    | 59.528              | 0.2896       |
 | 8          | Pyramid Pix2Pix (2 layer) DWT (1024x1024) | xxxxxx  | xxxxx          | xxxxx       | xxxxx               | xxxxx        |
 
 ## Notes
