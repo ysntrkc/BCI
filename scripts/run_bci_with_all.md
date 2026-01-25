@@ -401,6 +401,7 @@ JSD Score:         0.200150
 | JSD Score         ↓ | 0.200150  |
 
 
+<!-- 
 ## Experiment 7 - Pyramid Pix2Pix (2 layer) Baseline Model with original image size 1024x1024 and crop size 512x512
 
 ### Train
@@ -443,7 +444,6 @@ python evaluate.py \
   --result_path /mnt/d/thesis/results/comparison_baseline_1024/run_20260118_170529_BCI
 ```
 
-<!-- 
 ============================================================
                     EVALUATION SUMMARY
 ============================================================
@@ -455,7 +455,7 @@ FID Score:         106.360610
 KID Score:         0.059528
 JSD Score:         0.289643
 ============================================================
- -->
+
 
 ### Results
 | Metric | Value |
@@ -509,14 +509,28 @@ python evaluate.py \
   --result_path /mnt/d/thesis/results/comparison_dwt_1024/run_20260119_024601_BCI
 ``` 
 
+
+============================================================
+                    EVALUATION SUMMARY
+============================================================
+Number of images:  977
+------------------------------------------------------------
+Average PSNR:      20.573644 dB
+Average SSIM:      0.548537
+FID Score:         102.445639
+KID Score:         0.059746
+JSD Score:         0.298706
+============================================================
+
 ### Results
 | Metric | Value |
 |--------|-------|
-| Average PSNR  ↑    | xxxxxx  |
-| Average SSIM  ↑    | xxxxx  |
-| FID Score     ↓    | xxxxx |
-| KID Score (x1000) ↓ | xxxxx  |
-| JSD Score         ↓ | xxxxx  |
+| Average PSNR  ↑    | 20.573644  |
+| Average SSIM  ↑    | 0.548537  |
+| FID Score     ↓    | 102.445639 |
+| KID Score (x1000) ↓ | 59.746  |
+| JSD Score         ↓ | 0.298706  |
+ -->
 
 
 # Overall Summary of Results
@@ -529,8 +543,6 @@ python evaluate.py \
 | 6          | Pix2Pix DWT                        | 21.9556        | 0.5698         | 120.6661    | 77.398              | 0.2002       | 
 | 1          | Pyramid Pix2Pix (2 layer)          | 21.8857        | 0.5349         | 149.3463    | 112.267             | 0.1928       |
 | 2          | Pyramid Pix2Pix (2 layer) DWT      | 22.5494        | 0.5763         | 118.8326    | 74.003              | 0.1978       |
-| 7          | Pyramid Pix2Pix (2 layer) (1024x1024)     | 20.6055 | 0.5444         | 106.3606    | 59.528              | 0.2896       |
-| 8          | Pyramid Pix2Pix (2 layer) DWT (1024x1024) | xxxxxx  | xxxxx          | xxxxx       | xxxxx               | xxxxx        |
 
 ## Notes
 

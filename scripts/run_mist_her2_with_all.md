@@ -42,11 +42,28 @@ python evaluate.py \
   --result_path ./results/comparison_baseline/run_20260107_205347_MIST/HER2
 ```
 
+<!-- 
+============================================================
+                    EVALUATION SUMMARY
+============================================================
+Number of images:  1000
+------------------------------------------------------------
+Average PSNR:      15.322830 dB
+Average SSIM:      0.252960
+FID Score:         173.051529
+KID Score:         0.130980
+JSD Score:         0.120575
+============================================================
+ -->
+
 ### Results
 | Metric | Value |
 |--------|-------|
-| Average PSNR | 15.322830362650327 |
-| Average SSIM | 0.25296036560197316 |
+| Average PSNR  ↑    | 15.322830  |
+| Average SSIM  ↑    | 0.252960  |
+| FID Score     ↓    | 173.051529 |
+| KID Score (x1000) ↓ | 130.980  |
+| JSD Score         ↓ | 0.120575  |
 
 
 
@@ -92,11 +109,28 @@ python evaluate.py \
   --result_path ./results/comparison_baseline/run_20260108_003633_MIST_HER2
 ```
 
+<!-- 
+============================================================
+                    EVALUATION SUMMARY
+============================================================
+Number of images:  1000
+------------------------------------------------------------
+Average PSNR:      15.241194 dB
+Average SSIM:      0.249908
+FID Score:         161.157814
+KID Score:         0.116079
+JSD Score:         0.109859
+============================================================
+ -->
+
 ### Results
 | Metric | Value |
 |--------|-------|
-| Average PSNR | 15.241194163197815 |
-| Average SSIM | 0.24990762405411435 |
+| Average PSNR  ↑    | 15.241194  |
+| Average SSIM  ↑    | 0.249908  |
+| FID Score     ↓    | 161.157814 |
+| KID Score (x1000) ↓ | 116.079  |
+| JSD Score         ↓ | 0.109859  |
 
 
 
@@ -142,8 +176,34 @@ python evaluate.py \
   --result_path ./results/comparison_dwt/run_20260108_075951_MIST_HER2
 ```
 
+<!-- 
+============================================================
+                    EVALUATION SUMMARY
+============================================================
+Number of images:  1000
+------------------------------------------------------------
+Average PSNR:      15.297673 dB
+Average SSIM:      0.259146
+FID Score:         136.946822
+KID Score:         0.091966
+JSD Score:         0.117865
+============================================================
+ -->
+
 ### Results
 | Metric | Value |
 |--------|-------|
-| Average PSNR | 15.29767339452869 |
-| Average SSIM | 0.2591457618716408 |
+| Average PSNR  ↑    | 15.297673  |
+| Average SSIM  ↑    | 0.259146  |
+| FID Score     ↓    | 136.946822 |
+| KID Score (x1000) ↓ | 91.966  |
+| JSD Score         ↓ | 0.117865  |
+
+
+# Overall Summary of Results
+
+| Experiment | Model                             | Average PSNR  ↑ | Average SSIM  ↑ | FID Score ↓ | KID Score (x1000) ↓ | JSD Score ↓ |
+|------------|-----------------------------------|-----------------|-----------------|-------------|---------------------|--------------|
+| 1          | Baseline Model (Batch Size 20)    | 15.3228        | 0.2529         | 173.0515    | 130.980             | 0.1206       |
+| 2          | Baseline Model (Batch Size 16)    | 15.2412        | 0.2499         | 161.1578    | 116.079             | 0.1099       |
+| 3          | DWT Model (Batch Size 20)         | 15.2977        | 0.2591         | 136.9468    | 91.966              | 0.1179       |
