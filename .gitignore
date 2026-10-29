@@ -1,0 +1,6 @@
+PyramidPix2pix/results/*
+PyramidPix2pix/checkpoints/*
+
+# Ignore Python bytecode files
+__pycache__/
+*.pyc
