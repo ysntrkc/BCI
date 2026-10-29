@@ -8,13 +8,14 @@ dependencies = [
     "torchvision==0.24.1",
     "numpy>=2",
     "pillow",
-    "scipy",
+    "scipy<1.18",
     "scikit-image",
     "opencv-contrib-python",
     "kornia",
     "dominate",
     "visdom",
     "tqdm",
+    "pytorch-fid>=0.3.0",
 ]
 
 [tool.uv]

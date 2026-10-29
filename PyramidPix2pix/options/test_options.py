@@ -40,6 +40,12 @@ class TestOptions(BaseOptions):
             default="",
             help="specific run folder name under checkpoints/pyramidpix2pix/ (e.g., run_20260107_123456_BCI)",
         )
+        parser.add_argument(
+            "--results_tag",
+            type=str,
+            default="",
+            help="suffix for the results folder, e.g. 'full1024' -> test_latest_full1024; keeps earlier results intact",
+        )
         # rewrite devalue values
         # parser.set_defaults(model='test')
         # To avoid cropping, the load_size should be the same as crop_size

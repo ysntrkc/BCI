@@ -1,5 +1,7 @@
 import argparse
 import os
+import random
+import numpy as np
 from util import util
 import torch
 import models
@@ -192,6 +194,12 @@ class BaseOptions:
             default="L1_L2_L3_L4",
             help="L1 | L2 | L3 | L4 | fft | dwt",
         )
+        parser.add_argument(
+            "--seed",
+            type=int,
+            default=0,
+            help="seed for python/numpy/torch RNGs (random crops, flips, init)",
+        )
 
         self.initialized = True
         return parser
@@ -243,8 +251,11 @@ class BaseOptions:
         message += "----------------- End -------------------"
         print(message)
 
-        # save to the disk
-        expr_dir = os.path.join(opt.checkpoints_dir, opt.name)
+        # save to the disk; test options go next to the test results so the run's files stay untouched
+        if self.isTrain:
+            expr_dir = os.path.join(opt.checkpoints_dir, opt.name)
+        else:
+            expr_dir = os.path.join(opt.results_dir, opt.name, opt.results_subdir)
         util.mkdirs(expr_dir)
         file_name = os.path.join(expr_dir, "{}_opt.txt".format(opt.phase))
         with open(file_name, "wt") as opt_file:
@@ -285,6 +296,16 @@ class BaseOptions:
             if hasattr(opt, "run_name") and opt.run_name:
                 opt.name = os.path.join(opt.name, opt.run_name)
                 print(f"\n>>> Testing run: {opt.name}\n")
+            # results go to <results_dir>/<name>/<phase>_<epoch>[_iter<n>][_<results_tag>]
+            opt.results_subdir = "{}_{}".format(opt.phase, opt.epoch)
+            if opt.load_iter > 0:
+                opt.results_subdir += "_iter{:d}".format(opt.load_iter)
+            if opt.results_tag:
+                opt.results_subdir += "_" + opt.results_tag
+
+        random.seed(opt.seed)
+        np.random.seed(opt.seed)
+        torch.manual_seed(opt.seed)
 
         if print_opt:
             self.print_options(opt)

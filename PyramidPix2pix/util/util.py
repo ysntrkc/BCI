@@ -101,3 +101,41 @@ def mkdir(path):
     """
     if not os.path.exists(path):
         os.makedirs(path)
+
+
+def save_run_info(opt, out_dir):
+    """Write run_info.json (git commit, library versions, GPU, command line) into out_dir for provenance.
+
+    An existing run_info.json (e.g. when using --continue_train) is kept; the new one gets a timestamp suffix.
+    """
+    import json
+    import platform
+    import subprocess
+    import sys
+    from datetime import datetime
+
+    def git(*args):
+        try:
+            return subprocess.run(["git", *args], capture_output=True, text=True,
+                                  cwd=os.path.dirname(os.path.abspath(__file__))).stdout.strip()
+        except OSError:
+            return ""
+
+    now = datetime.now()
+    info = {
+        "time": now.isoformat(timespec="seconds"),
+        "argv": sys.argv,
+        "git_commit": git("rev-parse", "HEAD"),
+        "git_dirty": bool(git("status", "--porcelain", "--untracked-files=no")),
+        "python": platform.python_version(),
+        "torch": torch.__version__,
+        "cuda": torch.version.cuda,
+        "gpu": torch.cuda.get_device_name(0) if torch.cuda.is_available() else None,
+        "seed": getattr(opt, "seed", None),
+    }
+    mkdir(out_dir)
+    path = os.path.join(out_dir, "run_info.json")
+    if os.path.exists(path):
+        path = os.path.join(out_dir, "run_info_%s.json" % now.strftime("%Y%m%d_%H%M%S"))
+    with open(path, "w") as f:
+        json.dump(info, f, indent=2)

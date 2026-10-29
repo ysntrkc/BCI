@@ -12,6 +12,8 @@ import torch
 from torchvision import models, transforms
 from scipy import linalg
 from scipy.spatial.distance import jensenshannon
+from pytorch_fid.fid_score import calculate_frechet_distance, get_activations
+from pytorch_fid.inception import InceptionV3
 
 
 def parse_opt():
@@ -35,6 +37,12 @@ def parse_opt():
         type=int,
         default=100,
         help="batch size for KID kernel computation (lower = less memory)",
+    )
+    parser.add_argument(
+        "--images_subdir",
+        type=str,
+        default="test_latest",
+        help="results folder inside result_path written by test.py (e.g. test_latest_full1024)",
     )
     opt = parser.parse_args()
     return opt
@@ -245,7 +253,7 @@ def calculate_jsd(real_images, fake_images):
     return np.mean(jsd_values) if jsd_values else 0.0
 
 
-def evaluate_metrics(result_path, device="cuda", kid_batch_size=100):
+def evaluate_metrics(result_path, device="cuda", kid_batch_size=100, images_subdir="test_latest"):
     """
     Main evaluation function to calculate all metrics
     
@@ -264,7 +272,7 @@ def evaluate_metrics(result_path, device="cuda", kid_batch_size=100):
 
     # Collect image paths and calculate PSNR/SSIM
     print("Calculating PSNR and SSIM...")
-    image_dir = os.path.join(result_path, "test_latest/images")
+    image_dir = os.path.join(result_path, images_subdir, "images")
     
     if not os.path.exists(image_dir):
         raise ValueError(f"Image directory not found: {image_dir}")
@@ -350,6 +358,19 @@ def evaluate_metrics(result_path, device="cuda", kid_batch_size=100):
         print(f"KID: {kid_score:.6f}")
         results["kid"] = kid_score
 
+        # Standard FID/KID: pytorch-fid's TF-Inception pool3 features, comparable with the literature.
+        # fid/kid above (torchvision ImageNet InceptionV3) are kept for continuity with earlier runs.
+        print("Calculating standard FID/KID (pytorch-fid)...")
+        std_model = InceptionV3([InceptionV3.BLOCK_INDEX_BY_DIM[2048]]).to(device)
+        real_std = get_activations(real_images, std_model, batch_size=50, dims=2048, device=device, num_workers=4)
+        fake_std = get_activations(fake_images, std_model, batch_size=50, dims=2048, device=device, num_workers=4)
+        results["fid_std"] = calculate_frechet_distance(
+            real_std.mean(axis=0), np.cov(real_std, rowvar=False),
+            fake_std.mean(axis=0), np.cov(fake_std, rowvar=False),
+        )
+        results["kid_std"] = calculate_kid_batched(real_std, fake_std, batch_size=kid_batch_size)
+        print(f"FID (std): {results['fid_std']:.4f}  KID (std): {results['kid_std']:.6f}")
+
         # Calculate JSD
         print("Calculating JSD...")
         jsd_score = calculate_jsd(real_images, fake_images)
@@ -378,6 +399,9 @@ def print_summary(results):
         print(f"FID Score:         {results['fid']:.6f}")
     if "kid" in results:
         print(f"KID Score:         {results['kid']:.6f}")
+    if "fid_std" in results:
+        print(f"FID (pytorch-fid): {results['fid_std']:.6f}")
+        print(f"KID (pytorch-fid): {results['kid_std']:.6f}")
     if "jsd" in results:
         print(f"JSD Score:         {results['jsd']:.6f}")
     print("=" * 60)
@@ -402,12 +426,16 @@ def main():
         results = evaluate_metrics(
             result_path=opt.result_path,
             device=opt.device,
-            kid_batch_size=opt.kid_batch_size
+            kid_batch_size=opt.kid_batch_size,
+            images_subdir=opt.images_subdir,
         )
         print_summary(results)
-        
-        # Save results to file
-        results_file = os.path.join(opt.result_path, "evaluation_results.txt")
+
+        # Save results to file: legacy location for test_latest, otherwise next to the images
+        if opt.images_subdir == "test_latest":
+            results_file = os.path.join(opt.result_path, "evaluation_results.txt")
+        else:
+            results_file = os.path.join(opt.result_path, opt.images_subdir, "evaluation_results.txt")
         with open(results_file, "w") as f:
             f.write("EVALUATION RESULTS\n")
             f.write("=" * 60 + "\n")

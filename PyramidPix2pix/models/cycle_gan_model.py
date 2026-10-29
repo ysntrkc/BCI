@@ -65,6 +65,17 @@ class CycleGANModel(BaseModel):
                 help="use DWT (Discrete Wavelet Transform) loss for CycleGAN",
             )
             # Note: weight_dwt_ll and weight_dwt_detail are already defined in train_options.py
+            parser.add_argument(
+                "--use_paired_l1",
+                action="store_true",
+                help="add a paired pixel L1 loss (fake_B vs real_B, fake_A vs real_A): fair baseline for --use_dwt, which also uses the aligned pairs",
+            )
+            parser.add_argument(
+                "--weight_paired_l1",
+                type=float,
+                default=25.0,
+                help="weight for --use_paired_l1 (default matches weight_dwt_ll/weight_dwt_detail)",
+            )
 
         return parser
 
@@ -89,6 +100,8 @@ class CycleGANModel(BaseModel):
         # Add DWT loss names if enabled
         if self.isTrain and hasattr(opt, "use_dwt") and opt.use_dwt:
             self.loss_names.extend(["dwt_A", "dwt_B"])
+        if self.isTrain and getattr(opt, "use_paired_l1", False):
+            self.loss_names.extend(["paired_A", "paired_B"])
         # specify the images you want to save/display. The training/test scripts will call <BaseModel.get_current_visuals>
         visual_names_A = ["real_A", "fake_B", "rec_A"]
         visual_names_B = ["real_B", "fake_A", "rec_B"]
@@ -372,6 +385,18 @@ class CycleGANModel(BaseModel):
             self.loss_dwt_A = 0
             self.loss_dwt_B = 0
 
+        # Paired pixel L1: same supervision signal as the DWT loss, without the wavelet decomposition
+        if getattr(self.opt, "use_paired_l1", False):
+            self.loss_paired_B = (
+                self.criterionCycle(self.fake_B, self.real_B) * self.opt.weight_paired_l1
+            )
+            self.loss_paired_A = (
+                self.criterionCycle(self.fake_A, self.real_A) * self.opt.weight_paired_l1
+            )
+        else:
+            self.loss_paired_A = 0
+            self.loss_paired_B = 0
+
         # combined loss and calculate gradients
         self.loss_G = (
             self.loss_G_A
@@ -382,6 +407,8 @@ class CycleGANModel(BaseModel):
             + self.loss_idt_B
             + self.loss_dwt_A
             + self.loss_dwt_B
+            + self.loss_paired_A
+            + self.loss_paired_B
         )
         self.loss_G.backward()
 

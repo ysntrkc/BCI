@@ -32,7 +32,7 @@ from options.test_options import TestOptions
 from data import create_dataset
 from models import create_model
 from util.visualizer import save_images
-from util import html
+from util import html, util
 
 
 if __name__ == "__main__":
@@ -54,11 +54,10 @@ if __name__ == "__main__":
     model.setup(opt)  # regular setup: load and print networks; create schedulers
     # create a website
     web_dir = os.path.join(
-        opt.results_dir, opt.name, "{}_{}".format(opt.phase, opt.epoch)
+        opt.results_dir, opt.name, opt.results_subdir
     )  # define the website directory
-    if opt.load_iter > 0:  # load_iter is 0 by default
-        web_dir = "{:s}_iter{:d}".format(web_dir, opt.load_iter)
     print("creating web directory", web_dir)
+    util.save_run_info(opt, web_dir)
     webpage = html.HTML(
         web_dir,
         "Experiment = %s, Phase = %s, Epoch = %s" % (opt.name, opt.phase, opt.epoch),
