@@ -19,14 +19,16 @@
 ## Setup
 ### 1)Envs
 - Linux
-- Python>=3.6
-- CPU or NVIDIA GPU + CUDA CuDNN
+- Python 3.12 (managed by [uv](https://docs.astral.sh/uv/))
+- NVIDIA GPU + CUDA 12.8 (PyTorch 2.9.1, works on RTX 50xx)
 
 Install python packages
 ```
-git clone https://github.com/bupt-ai-cz/BCI
+git clone https://github.com/ysntrkc/BCI
+cd BCI
+uv sync
 cd PyramidPix2pix
-pip install -r requirements.txt
+uv run python train.py ...
 ```
 ### 2)Prepare dataset
 - Download BCI dataset from our homepage.

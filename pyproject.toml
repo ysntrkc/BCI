@@ -1,0 +1,31 @@
+[project]
+name = "bci-pyramidpix2pix"
+version = "0.1.0"
+description = "Pyramid Pix2pix (BCI) with DWT experiments"
+requires-python = "==3.12.*"
+dependencies = [
+    "torch==2.9.1",
+    "torchvision==0.24.1",
+    "numpy>=2",
+    "pillow",
+    "scipy",
+    "scikit-image",
+    "opencv-contrib-python",
+    "kornia",
+    "dominate",
+    "visdom",
+    "tqdm",
+]
+
+[tool.uv]
+package = false
+
+# RTX 50xx (sm_120) needs CUDA 12.8 wheels
+[tool.uv.sources]
+torch = { index = "pytorch-cu128" }
+torchvision = { index = "pytorch-cu128" }
+
+[[tool.uv.index]]
+name = "pytorch-cu128"
+url = "https://download.pytorch.org/whl/cu128"
+explicit = true
