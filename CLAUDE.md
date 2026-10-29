@@ -27,6 +27,11 @@ uv run python evaluate.py --result_path /mnt/d/thesis/runs/pyramidpix2pix/dwt/ru
     --images_subdir test_latest_full1024
 
 python3 ~/workspace/tez/tools/build_runs_index.py    # run tablosunu güncelle
+
+# 3 veri setinde tam tur (train → crop256s0 + full1024 test → eval), ayrık çalıştır:
+setsid nohup scripts/baseline_round.sh baseline L1_L2_L3 > /mnt/d/thesis/runs/_logs/round.log 2>&1 &
+#   DWT turu: scripts/baseline_round.sh dwt L1_L2_L3_dwt ; tek veri seti: ... baseline L1_L2_L3 BCI/combined
+#   smoke: RUNS=/tmp/x EXTRA_TRAIN="--max_dataset_size 8 --n_epochs 1 --n_epochs_decay 1 --save_epoch_freq 1" EXTRA_TEST="--num_test 10" scripts/baseline_round.sh
 ```
 
 Varsayılanlar (`options/base_options.py`, `options/test_options.py`): `--checkpoints_dir` ve `--results_dir`
@@ -43,7 +48,8 @@ uv run python train.py --name smoke --checkpoints_dir /tmp/smoke --max_dataset_s
 | Dosya | İçerik |
 |---|---|
 | `train.py`, `test.py` | standart pix2pix döngüleri. `test.py` `opt.num_threads=0, batch_size=1, serial_batches, no_flip` zorlar. İkisi de `run_info.json` yazar (`util/util.py:save_run_info`: git commit/dirty, torch/CUDA, GPU, argv, seed) |
-| `evaluate.py` | PSNR/SSIM (skimage, BGR uint8), `fid`/`kid` (torchvision InceptionV3 ImageNet, eski run'larla süreklilik), `fid_std`/`kid_std` (pytorch-fid TF-Inception, literatürle karşılaştırılabilir), JSD (renk histogramı) |
+| `scripts/baseline_round.sh` | 3 veri setinde train → test (2 protokol) → evaluate turu; `RUNS`, `EXTRA_TRAIN`, `EXTRA_TEST` env ile ayarlanır |
+| `evaluate.py` | **Tüm yöntemlerin ortak değerlendiricisi** (ASP turu da bunu kullanır). Görsel düzeni: `images/<ad>_fake_B.png` (pix2pix) veya `images/fake_B/<ad>` (CUT/ASP). PSNR/SSIM (skimage, BGR uint8), `fid`/`kid` (torchvision InceptionV3 ImageNet, eski run'larla süreklilik), `fid_std`/`kid_std` (pytorch-fid TF-Inception, literatürle karşılaştırılabilir), JSD (renk histogramı) |
 | `models/pix2pix_model.py` | `--pattern` ile seçilen kayıplar; `haar_wavelet_decomposition()` ve `dwt` dalı burada |
 | `models/cycle_gan_model.py` | `--use_dwt`: aynı Haar kaybı iki yönde (`fake_B`↔`real_B`, `fake_A`↔`real_A`). `--use_paired_l1 --weight_paired_l1 25`: aynı eşli denetim, düz L1 — `--use_dwt` için adil baseline (henüz eğitilmedi) |
 | `models/networks.py` | G: `resnet_9blocks` (varsayılan), `resnet_6blocks`, `unet_128/256`, `attention_unet_32`; D: `basic`, `n_layers`, `pixel`, `conv` |

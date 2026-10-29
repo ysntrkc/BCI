@@ -277,37 +277,47 @@ def evaluate_metrics(result_path, device="cuda", kid_batch_size=100, images_subd
     if not os.path.exists(image_dir):
         raise ValueError(f"Image directory not found: {image_dir}")
     
-    for i in tqdm(os.listdir(image_dir), desc="Processing images"):
-        if "fake_B" in i:
-            try:
-                fake_path = os.path.join(image_dir, i)
-                real_path = os.path.join(image_dir, i.replace("fake_B", "real_B"))
+    # pix2pix layout: images/<name>_fake_B.png; CUT/ASP layout: images/fake_B/<name> + images/real_B/<name>
+    if os.path.isdir(os.path.join(image_dir, "fake_B")):
+        pairs = [
+            (os.path.join(image_dir, "fake_B", i), os.path.join(image_dir, "real_B", i))
+            for i in os.listdir(os.path.join(image_dir, "fake_B"))
+        ]
+    else:
+        pairs = [
+            (os.path.join(image_dir, i), os.path.join(image_dir, i.replace("fake_B", "real_B")))
+            for i in os.listdir(image_dir)
+            if "fake_B" in i
+        ]
 
-                if not os.path.exists(real_path):
-                    print(f"Warning: Real image not found for {i}")
-                    continue
-
-                fake = cv.imread(fake_path)
-                real = cv.imread(real_path)
-
-                if fake is None or real is None:
-                    print(f"Warning: Could not read images for {i}")
-                    continue
-
-                PSNR = peak_signal_noise_ratio(fake, real)
-                psnr.append(PSNR)
-
-                SSIM = structural_similarity(
-                    fake, real, multichannel=True, channel_axis=2
-                )
-                ssim.append(SSIM)
-
-                # Store paths for FID, KID, and JSD calculation
-                fake_images.append(fake_path)
-                real_images.append(real_path)
-            except Exception as e:
-                print(f"Error processing {i}: {e}")
+    for fake_path, real_path in tqdm(pairs, desc="Processing images"):
+        i = os.path.basename(fake_path)
+        try:
+            if not os.path.exists(real_path):
+                print(f"Warning: Real image not found for {i}")
                 continue
+
+            fake = cv.imread(fake_path)
+            real = cv.imread(real_path)
+
+            if fake is None or real is None:
+                print(f"Warning: Could not read images for {i}")
+                continue
+
+            PSNR = peak_signal_noise_ratio(fake, real)
+            psnr.append(PSNR)
+
+            SSIM = structural_similarity(
+                fake, real, multichannel=True, channel_axis=2
+            )
+            ssim.append(SSIM)
+
+            # Store paths for FID, KID, and JSD calculation
+            fake_images.append(fake_path)
+            real_images.append(real_path)
+        except Exception as e:
+            print(f"Error processing {i}: {e}")
+            continue
 
     if len(psnr) == 0 or len(ssim) == 0:
         raise ValueError("No valid images were evaluated!")
