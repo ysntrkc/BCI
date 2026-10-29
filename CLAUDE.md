@@ -69,8 +69,11 @@ Alt dize kontrolü ile çalışır (`"L2" in opt.pattern` gibi):
   `L4` sadece `L3` varsa hesaplanır (Gauss bulanıklaştırma + `blur_pool2d` ile alt örnekleme, kornia).
 - `dwt`: tek seviyeli Haar ayrışımı (stride 2 depthwise conv) → `weight_dwt_ll * L1(LL) + weight_dwt_detail * mean(L1(LH), L1(HL), L1(HH))`.
 - `noGAN`: GAN kaybını kapatır.
-- Kullanılan desenler: plain pix2pix = `L1` / `L1_dwt`; Pyramid ("2 layer") = `L1_L2_L3` / `L1_L2_L3_dwt`;
-  orijinal BCI = `L1_L2_L3_L4`.
+- Kullanılan desenler: plain pix2pix = `L1` / `L1_dwt`; Pyramid = `L1_L2_L3` / `L1_L2_L3_dwt`;
+  orijinal BCI kod varsayılanı = `L1_L2_L3_L4`.
+- **Makaleyle isim eşlemesi** (Liu vd. 2022, Tablo 3): `L2` = S1 (1/2 ölçek), `L3` = S2, `L4` = S3. Bizim `L1_L2_L3` =
+  makaledeki **pix2pix+S1+S2** (PSNR 21.033); eski notlardaki "2 layer" = iki ek ölçek demek. Makalenin "two-layer" dediği
+  en iyi konfigürasyon pix2pix+S1 = `L1_L2` (21.160). Makale tam 1024 ile batch 2 eğitti; biz 256 kesim, batch 20.
 - **Bozuk / ölü dallar, kullanma:** `fft` (torch'tan kaldırılmış `torch.rfft` kullanıyor), `conv` ve `fft`
   (`models/vgg19_conv.pth` repoda yok), `perc`/`contextual` (`self.vggnet_fix` tanımlı değil), `mask` (`<dataroot>/mask_<phase>/` klasörü gerekir, veri setlerinde yok).
 
