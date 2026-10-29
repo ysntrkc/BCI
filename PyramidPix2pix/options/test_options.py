@@ -12,7 +12,7 @@ class TestOptions(BaseOptions):
         parser.add_argument(
             "--results_dir",
             type=str,
-            default="/mnt/d/thesis/results/",
+            default="/mnt/d/thesis/runs",
             help="saves results here.",
         )
         parser.add_argument(

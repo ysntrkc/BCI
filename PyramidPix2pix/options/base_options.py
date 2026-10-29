@@ -41,7 +41,7 @@ class BaseOptions:
         parser.add_argument(
             "--checkpoints_dir",
             type=str,
-            default="/mnt/d/thesis/checkpoints",
+            default="/mnt/d/thesis/runs",
             help="models are saved here",
         )
         # model parameters
