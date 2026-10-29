@@ -25,7 +25,7 @@ class BaseOptions:
         # basic parameters
         parser.add_argument(
             "--dataroot",
-            default="/mnt/d/thesis/datasets/BCI/combined",
+            default="/mnt/d/thesis/datasets/BCI",
             help="path to images (should have subfolders trainA, trainB, valA, valB, etc)",
         )
         parser.add_argument(
@@ -277,9 +277,10 @@ class BaseOptions:
             dataroot_path = opt.dataroot.replace(
                 "\\", "/"
             )  # for Windows path compatibility
-            dataset_name = "_".join(
-                dataroot_path.split("/datasets/")[-1].rsplit("/", 1)[0].split("/")
-            )
+            rel = dataroot_path.rstrip("/")
+            rel = rel.split("/datasets/")[-1] if "/datasets/" in rel else os.path.basename(rel)
+            # BCI/combined -> BCI, MIST/HER2 -> MIST_HER2
+            dataset_name = "_".join(p for p in rel.split("/") if p != "combined")
 
             # Generate timestamp: yyyyMMdd_HHmmss
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")

@@ -3,7 +3,7 @@
 # train -> test (seeded 256 crop + full 1024) -> evaluate, one dataset after another.
 #
 # Usage: scripts/baseline_round.sh [variant] [pattern] [datasets...]
-#   defaults: baseline L1_L2_L3 "BCI/combined MIST/HER2/combined HER2match/combined"
+#   defaults: baseline L1_L2_L3 "BCI MIST/HER2 HER2match"   (reads <dataset>/{HE,IHC}/<phase>)
 #   e.g.      scripts/baseline_round.sh dwt L1_L2_L3_dwt
 # Run detached:  setsid nohup scripts/baseline_round.sh > /mnt/d/thesis/runs/_logs/round.log 2>&1 &
 set -uo pipefail
@@ -12,7 +12,7 @@ cd "$(dirname "$0")/../PyramidPix2pix"
 VARIANT=${1:-baseline}
 PATTERN=${2:-L1_L2_L3}
 shift $(( $# < 2 ? $# : 2 ))
-DATASETS=${*:-BCI/combined MIST/HER2/combined HER2match/combined}
+DATASETS=${*:-BCI MIST/HER2 HER2match}
 NAME=pyramidpix2pix/$VARIANT
 RUNS=${RUNS:-/mnt/d/thesis/runs}          # override for smoke tests
 EXTRA_TRAIN=${EXTRA_TRAIN:-}                  # e.g. "--max_dataset_size 8 --n_epochs 1 --n_epochs_decay 1"

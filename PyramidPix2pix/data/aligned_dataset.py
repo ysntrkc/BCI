@@ -9,6 +9,8 @@ class AlignedDataset(BaseDataset):
 
     It assumes that the directory '/path/to/data/train' contains image pairs in the form of {A,B}.
     During test time, you need to prepare a directory '/path/to/data/test'.
+    If '/path/to/data/train' does not exist, pairs are read from '/path/to/data/HE/train' (A) and
+    '/path/to/data/IHC/train' (B), matched by file name.
     """
 
     def __init__(self, opt):
@@ -19,7 +21,14 @@ class AlignedDataset(BaseDataset):
         """
         BaseDataset.__init__(self, opt)
         self.dir_AB = os.path.join(opt.dataroot, opt.phase)  # get the image directory
-        self.AB_paths = sorted(make_dataset(self.dir_AB, opt.max_dataset_size))  # get image paths
+        if os.path.isdir(self.dir_AB):  # side-by-side AB images: <dataroot>/<phase>/
+            self.AB_paths = sorted(make_dataset(self.dir_AB, opt.max_dataset_size))  # get image paths
+            self.B_paths = self.AB_paths
+        else:  # separate tiles with identical file names: <dataroot>/HE/<phase>/ (A) and <dataroot>/IHC/<phase>/ (B)
+            self.AB_paths = sorted(make_dataset(os.path.join(opt.dataroot, 'HE', opt.phase), opt.max_dataset_size))
+            self.B_paths = [os.path.join(opt.dataroot, 'IHC', opt.phase, os.path.basename(p)) for p in self.AB_paths]
+            missing = [p for p in self.B_paths if not os.path.isfile(p)]
+            assert not missing, '%d IHC tiles missing, e.g. %s' % (len(missing), missing[0])
         if 'mask' in opt.pattern:
             self.mask_paths = sorted(make_dataset(opt.dataroot + '/mask_' + opt.phase, opt.max_dataset_size))
         assert(self.opt.load_size >= self.opt.crop_size)   # crop_size should be smaller than the size of loaded image
@@ -40,12 +49,16 @@ class AlignedDataset(BaseDataset):
         """
         # read a image given a random integer index
         AB_path = self.AB_paths[index]
-        AB = Image.open(AB_path).convert('RGB')
-        # split AB image into A and B
-        w, h = AB.size
-        w2 = int(w / 2)
-        A = AB.crop((0, 0, w2, h))
-        B = AB.crop((w2, 0, w, h))
+        B_path = self.B_paths[index]
+        if B_path == AB_path:  # split AB image into A and B
+            AB = Image.open(AB_path).convert('RGB')
+            w, h = AB.size
+            w2 = int(w / 2)
+            A = AB.crop((0, 0, w2, h))
+            B = AB.crop((w2, 0, w, h))
+        else:
+            A = Image.open(AB_path).convert('RGB')
+            B = Image.open(B_path).convert('RGB')
 
         # apply the same transform to both A and B
         transform_params = get_params(self.opt, A.size)
@@ -59,9 +72,9 @@ class AlignedDataset(BaseDataset):
             mask_path = self.mask_paths[index]
             mask = Image.open(mask_path).convert('RGB')
             mask = B_transform(mask)
-            return {'A': A, 'B': B, 'A_paths': AB_path, 'B_paths': AB_path, 'mask': mask}
+            return {'A': A, 'B': B, 'A_paths': AB_path, 'B_paths': B_path, 'mask': mask}
 
-        return {'A': A, 'B': B, 'A_paths': AB_path, 'B_paths': AB_path}
+        return {'A': A, 'B': B, 'A_paths': AB_path, 'B_paths': B_path}
 
     def __len__(self):
         """Return the total number of images in the dataset."""
